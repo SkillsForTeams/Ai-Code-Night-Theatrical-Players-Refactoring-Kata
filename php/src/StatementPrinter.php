@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Theatrical;
 
-use Error;
 use NumberFormatter;
 
 class StatementPrinter
@@ -14,52 +13,26 @@ class StatementPrinter
      */
     public function print(Invoice $invoice, array $plays): string
     {
-        $totalAmount = 0;
+        $totalAmount = Money::zero();
         $volumeCredits = 0;
+        $format = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
 
         $result = "Statement for {$invoice->customer}\n";
-        $format = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
 
         foreach ($invoice->performances as $performance) {
             $play = $plays[$performance->playId];
-            $thisAmount = 0;
+            $calculator = PerformanceCalculator::create($performance, $play);
+            $amount = $calculator->amount();
 
-            switch ($play->type) {
-                case 'tragedy':
-                    $thisAmount = 40000;
-                    if ($performance->audience > 30) {
-                        $thisAmount += 1000 * ($performance->audience - 30);
-                    }
-                    break;
+            $result .= "  {$play->name}: {$amount->format($format)} ({$performance->audience} seats)\n";
 
-                case 'comedy':
-                    $thisAmount = 30000;
-                    if ($performance->audience > 20) {
-                        $thisAmount += 10000 + 500 * ($performance->audience - 20);
-                    }
-                    $thisAmount += 300 * $performance->audience;
-                    break;
-
-                default:
-                    throw new Error("Unknown type: {$play->type}");
-            }
-
-            // add volume credits
-            $volumeCredits += max($performance->audience - 30, 0);
-            // add extra credit for every ten comedy attendees
-            if ($play->type === 'comedy') {
-                $volumeCredits += floor($performance->audience / 5);
-            }
-
-            // print line for this order
-            $result .= "  {$play->name}: {$format->formatCurrency($thisAmount / 100, 'USD')} ";
-            $result .= "({$performance->audience} seats)\n";
-
-            $totalAmount += $thisAmount;
+            $totalAmount = $totalAmount->add($amount);
+            $volumeCredits += $calculator->volumeCredits();
         }
 
-        $result .= "Amount owed is {$format ->formatCurrency($totalAmount / 100, 'USD')}\n";
+        $result .= "Amount owed is {$totalAmount->format($format)}\n";
         $result .= "You earned {$volumeCredits} credits";
+
         return $result;
     }
 }
