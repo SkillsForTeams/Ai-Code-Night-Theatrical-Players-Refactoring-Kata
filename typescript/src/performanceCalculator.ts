@@ -1,3 +1,4 @@
+import { statementConfig } from "./config";
 import { Performance, Play } from "./domain";
 
 abstract class PerformanceCalculator {
@@ -15,9 +16,12 @@ abstract class PerformanceCalculator {
 
 class TragedyCalculator extends PerformanceCalculator {
   get amount(): number {
-    let result = 40000;
-    if (this.performance.audience > 30) {
-      result += 1000 * (this.performance.audience - 30);
+    const pricing = statementConfig.pricing.tragedy;
+    let result = pricing.baseAmount;
+    if (this.performance.audience > pricing.audienceThreshold) {
+      result +=
+        pricing.amountPerAudienceAboveThreshold *
+        (this.performance.audience - pricing.audienceThreshold);
     }
     return result;
   }
@@ -25,11 +29,15 @@ class TragedyCalculator extends PerformanceCalculator {
 
 class ComedyCalculator extends PerformanceCalculator {
   get amount(): number {
-    let result = 30000;
-    if (this.performance.audience > 20) {
-      result += 10000 + 500 * (this.performance.audience - 20);
+    const pricing = statementConfig.pricing.comedy;
+    let result = pricing.baseAmount;
+    if (this.performance.audience > pricing.audienceThreshold) {
+      result +=
+        pricing.amountAboveThreshold +
+        pricing.amountPerAudienceAboveThreshold *
+          (this.performance.audience - pricing.audienceThreshold);
     }
-    return result + 300 * this.performance.audience;
+    return result + pricing.amountPerAudience * this.performance.audience;
   }
 
   get volumeCredits(): number {
