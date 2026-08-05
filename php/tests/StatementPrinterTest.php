@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Theatrical\Invoice;
 use Theatrical\Performance;
 use Theatrical\Play;
+use Theatrical\Pricing\PricingConfig;
 use Theatrical\StatementPrinter;
 
 final class StatementPrinterTest extends TestCase
@@ -89,6 +90,44 @@ final class StatementPrinterTest extends TestCase
         $this->assertStringContainsString('You earned 4 credits', $result);
     }
 
+    public function testCustomPricingConfigChangesAmountsAndCurrency(): void
+    {
+        $plays = [
+            'hamlet' => new Play('Hamlet', 'tragedy'),
+        ];
+        $performances = [new Performance('hamlet', 20)]; // <= 30, no bonus
+        $pricingConfig = PricingConfig::fromArray([
+            'currency' => [
+                'locale' => 'en_US',
+                'code' => 'EUR',
+            ],
+            'genres' => [
+                'tragedy' => [
+                    'baseAmountCents' => 50000, // $500 base instead of $400
+                    'audienceBonusThreshold' => 30,
+                    'bonusCentsPerAttendee' => 1000,
+                ],
+                'comedy' => [
+                    'baseAmountCents' => 30000,
+                    'centsPerAttendee' => 300,
+                    'audienceBonusThreshold' => 20,
+                    'bonusFlatCents' => 10000,
+                    'bonusCentsPerAttendee' => 500,
+                    'attendeesPerVolumeCredit' => 5,
+                ],
+            ],
+            'volumeCredits' => [
+                'creditAudienceThreshold' => 30,
+            ],
+        ]);
+
+        $result = $this->printStatement($plays, $performances, 'BigCo', $pricingConfig);
+
+        // Config-driven base amount ($500) and currency (EUR) both take effect.
+        $this->assertStringContainsString('Hamlet: €500.00 (20 seats)', $result);
+        $this->assertStringContainsString('Amount owed is €500.00', $result);
+    }
+
     public function testNewPlayTypes(): void
     {
         $plays = [
@@ -106,9 +145,13 @@ final class StatementPrinterTest extends TestCase
      * @param array<string, Play> $plays
      * @param array<int, Performance> $performances
      */
-    private function printStatement(array $plays, array $performances, string $customer = 'BigCo'): string
-    {
+    private function printStatement(
+        array $plays,
+        array $performances,
+        string $customer = 'BigCo',
+        ?PricingConfig $pricingConfig = null
+    ): string {
         $invoice = new Invoice($customer, $performances);
-        return (new StatementPrinter())->print($invoice, $plays);
+        return (new StatementPrinter($pricingConfig))->print($invoice, $plays);
     }
 }

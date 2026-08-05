@@ -1,0 +1,24 @@
+{
+    "currency": {
+        "locale": "en_US",
+        "code": "USD"
+    },
+    "genres": {
+        "tragedy": {
+            "baseAmountCents": 40000,
+            "audienceBonusThreshold": 30,
+            "bonusCentsPerAttendee": 1000
+        },
+        "comedy": {
+            "baseAmountCents": 30000,
+            "centsPerAttendee": 300,
+            "audienceBonusThreshold": 20,
+            "bonusFlatCents": 10000,
+            "bonusCentsPerAttendee": 500,
+            "attendeesPerVolumeCredit": 5
+        }
+    },
+    "volumeCredits": {
+        "creditAudienceThreshold": 30
+    }
+}

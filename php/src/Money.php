@@ -28,8 +28,8 @@ final class Money
         return new self($this->cents + $other->cents);
     }
 
-    public function format(NumberFormatter $formatter): string
+    public function format(NumberFormatter $formatter, string $currencyCode): string
     {
-        return (string) $formatter->formatCurrency($this->cents / 100, 'USD');
+        return (string) $formatter->formatCurrency($this->cents / 100, $currencyCode);
     }
 }
