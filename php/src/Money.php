@@ -23,11 +23,6 @@ final class Money
         return new self($cents);
     }
 
-    public static function zero(): self
-    {
-        return new self(0);
-    }
-
     public function add(self $other): self
     {
         return new self($this->cents + $other->cents);

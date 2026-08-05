@@ -13,7 +13,7 @@ class StatementPrinter
      */
     public function print(Invoice $invoice, array $plays): string
     {
-        $totalAmount = Money::zero();
+        $totalAmount = Money::fromCents(0);
         $volumeCredits = 0;
         $format = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
 
